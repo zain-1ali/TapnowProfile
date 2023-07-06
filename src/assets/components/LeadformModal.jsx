@@ -81,7 +81,7 @@ const formattedDate = `${month} ${day},${year}`;
 
 
 
-
+console.log(userdata?.Analytics?.tContactsMeCrntWk)
 
 const addData = async () => {
   if (data.name || data.company || data.email || data.message || data.job || data.phone) {
@@ -150,7 +150,7 @@ const addData = async () => {
               class="h-[85px] w-[85px] rounded-full object-cover "
             />
             <label for="img">
-              <div class="w-[93px] h-[26px] bg-black text-white mt-2 rounded-xl text-sm flex justify-center items-center cursor-pointer">
+              <div class="w-[93px] h-[26px] bg-[#0b567f] text-white mt-2 rounded-xl text-sm flex justify-center items-center cursor-pointer">
                 Add image
               </div>
               <input
@@ -269,9 +269,16 @@ const addData = async () => {
             </div>
 
 }
-            <div class="w-[100%] border rounded-3xl mt-[15px] h-[50px] bg-black flex justify-center items-center text-white cursor-pointer" onClick={()=>addData()}>
+
+<div className='w-[100%] flex justify-center mt-[20px]'>
+<div class="w-[45%] border rounded-3xl  h-[46px] bg-[#0b567f] flex justify-center items-center text-white cursor-pointer mr-2" onClick={()=>addData()}>
               Submit
             </div>
+            <div class="w-[45%] border rounded-3xl  h-[46px] bg-[#0b567f] flex justify-center items-center text-white cursor-pointer ml-2" onClick={()=>handleModal()}>
+              Cancel
+            </div>
+</div>
+            
           </div>
 
           <ToastContainer position="top-center" autoClose={2000} />

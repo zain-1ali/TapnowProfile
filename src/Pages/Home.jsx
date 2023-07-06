@@ -28,7 +28,7 @@ const Home = () => {
     console.log("test1");
     const starCountRef = ref(db, `User/`);
     onValue(starCountRef, async (snapshot) => {
-      console.log(snapshot.val());
+      // console.log(snapshot.val());
       const data = await snapshot.val();
       setusersdata(Object.values(data));
 
@@ -39,7 +39,7 @@ const Home = () => {
     });
   }, []);
 
-  console.log(usersdata);
+  // console.log(usersdata);
 
   let [notfound, setnotfound] = useState(false);
   let [endpoint, setendpoint] = useState("");
@@ -65,40 +65,29 @@ const Home = () => {
         console.log("true");
         usersdata?.map((elm) => {
           if (userid === elm?.id || userid === elm?.userName) {
-            console.log(elm);
+            // console.log(elm);
             setuserdata(elm);
               setModal(elm?.leadMode)
-              if(elm?.Analytics){
-                if(currentDate>=elm?.Analytics?.updatedAt + oneWeek){
-                update(ref(db, `User/${elm?.id}/Analytics`),{totalClicks:elm?.Analytics?.totalClicks+1,updatedAt:currentDate,linksEngPstWk:elm?.Analytics?.linksEngCrntWk,tContactsMePstWk:elm?.Analytics?.tContactsMeCrntWk}).then(()=>{
-                  update(ref(db, `User/${elm?.id}/Analytics`),{linksEngCrntWk:0,tContactsMeCrntWk:0})
-                })
-
-                }
-                else{
-                  update(ref(db, `User/${elm?.id}/Analytics`),{totalClicks:elm?.Analytics?.totalClicks+1,updatedAt:currentDate})
-                }
-              }
-              else{
-                update(ref(db, `User/${elm?.id}/Analytics`),{totalClicks:1,linksEngCrntWk:0,linksEngPstWk:0,tContactsMeCrntWk:0,tContactsMePstWk:0,updatedAt:currentDate})
-              }
-              
-            // if (elm.links) {
-            //     console.log(elm)
-            // setsociallink(Object.values(elm?.links ))
-
-
-          elm?.links &&  setsociallink(Object.values(elm?.links));
-
-            // }
+              elm?.links &&   setsociallink(Object.values(elm?.links));
             setloading(false);
           }
-          // else if (elm?.tagUid?.some((el) => { return userid == el?.id })) {
-          //     setuserdata(elm)
-          //     setsociallink(elm?.links)
-          //     setloading(false)
-          // }
+         
         });
+
+
+//     let thedata=usersdata?.filter((elm)=>{
+// return userid === elm?.id || userid === elm?.userName
+//         })
+// if(thedata){
+//   setuserdata(thedata);
+//   setModal(thedata?.leadMode)
+//   thedata?.links &&  setsociallink(Object.values(thedata?.links));
+// setloading(false);
+// }
+       
+
+
+
       } else {
         setloading(false);
         setnotfound(true);
@@ -106,9 +95,53 @@ const Home = () => {
     }
   }, [usersdata]);
 
-  console.log(userdata);
+  console.log(userdata?.Analytics?.updatedAt);
 
 
+
+
+// ----------------------------------------->Analytics<-------------------------------------
+
+useEffect(()=>{
+  if(userdata?.id){
+
+  if(userdata?.Analytics){
+    if(currentDate>=userdata?.Analytics?.updatedAt + oneWeek){
+    update(ref(db, `User/${userdata?.id}/Analytics`),{totalClicks:userdata?.Analytics?.totalClicks+1,updatedAt:currentDate,linksEngPstWk:userdata?.Analytics?.linksEngCrntWk,tContactsMePstWk:userdata?.Analytics?.tContactsMeCrntWk}).then(()=>{
+      update(ref(db, `User/${userdata?.id}/Analytics`),{linksEngCrntWk:0,tContactsMeCrntWk:0})
+    })
+
+    }
+    else{
+      update(ref(db, `User/${userdata?.id}/Analytics`),{totalClicks:userdata?.Analytics?.totalClicks+1})
+    }
+  }
+  else{
+    update(ref(db, `User/${userdata?.id}/Analytics`),{totalClicks:1,linksEngCrntWk:0,linksEngPstWk:0,tContactsMeCrntWk:0,tContactsMePstWk:0})
+  }
+}
+},[userdata?.id])
+
+
+// ----------------------------------------->Link Analytics<-------------------------------------
+
+let linkAnalytics=(name)=>{
+
+  if(userdata?.Analytics?.links?.[name]){
+    console.log(userdata?.Analytics?.links?.[name])
+    update(ref(db, `User/${userdata?.id}/Analytics/links/${name}`),{totalClicks:userdata?.Analytics?.links?.[name]?.totalClicks+1,updatedAt:currentDate}).then(()=>{
+update(ref(db, `User/${userdata?.id}/Analytics/`),{linksEngCrntWk:userdata?.Analytics?.linksEngCrntWk+1})
+
+    })
+  }
+  else{
+update(ref(db, `User/${userdata?.id}/Analytics/links/${name}/`),{name,totalClicks:1,updatedAt:currentDate}).then(()=>{
+update(ref(db, `User/${userdata?.id}/Analytics/`),{linksEngCrntWk:userdata?.Analytics?.linksEngCrntWk+1})
+
+})
+
+  }
+}
 
 
   
@@ -149,10 +182,10 @@ let downloadVcf = async () => {
     .addCompany(userdata?.company)
     .addEmail(userdata?.email)
     .addPhoneNumber(userdata?.phone)
-    .addAddress(null, null, userdata?.location)
+    .addAddress('', '', userdata?.location)
 
   sociallink?.map((link) => {
-    myVCard.addSocial(link.value, link.name, link.name);
+    myVCard.addSocial(link.value, link.title, link.title);
   });
 
   const vcardData = myVCard.toString();
@@ -165,13 +198,14 @@ let downloadVcf = async () => {
   link.click();
   document.body.removeChild(link);
 };
-
+console.log(sociallink)
   return (
     <>
     {loading ? <Loader /> :
     
    <>
    {notfound  ? <NotFound /> :
+   userdata.directMode===false ?
     <div className="min-h-[100vh] max-w-[420px] w-[100%] flex flex-col items-center rounded-md  relative">
       {/* <ToastContainer position="top-center" autoClose={2000} /> */}
 
@@ -243,19 +277,22 @@ let downloadVcf = async () => {
 
 
 
-        <div className="w-[100%] flex justify-center mt-[6px]">
-<div className=" w-[70%]  grid grid-cols-3 gap-x-4 mr-[10px]">
+        <div className="w-[90%] flex justify-center mt-[6px]">
+<div className=" w-[70%]  grid grid-cols-3 gap-x-4">
 {
     sociallink?.map((elm)=>{
         return (
             <>
               <a
                 target="_blank"
-                href={returnSocialUrl(elm?.name, elm?.value)}
+                href={returnSocialUrl(elm?.title, elm?.value)}
                 class="h-[130px] w-[100px] flex flex-col  items-center mt-2 "
+                style={elm?.isHide===true || elm?.isHighLighted===true ?{display:'none'}:null}
+                onClick={()=>linkAnalytics(elm?.title)}
+
               >
                 <img
-                  src={returnIcons(elm?.name)}
+                  src={returnIcons(elm?.title)}
                   alt="img"
                   class={` ${
                     elm?.name === "Calendly"
@@ -273,13 +310,41 @@ let downloadVcf = async () => {
 </div>
         </div>
 
+<div className="w-[100%]">
+{
+sociallink?.map((elm)=>{
+  return  <>
+                
+  <a target="_blank" href={returnSocialUrl(elm?.title, elm?.value)} onClick={()=>linkAnalytics(elm?.title)}>
+  <div className="w-[100%] h-[70px] mt-4 bg-[#f7f7f7] flex" style={elm?.isHide===true || elm?.isHighLighted===false ?{display:'none'}:null}>
+<div className="w-[30%]  flex justify-center items-center">
+<img src={returnIcons(elm?.title)} alt=""  className="h-[50px] w-[50px]"/>
+</div>
+
+<div className="w-[70%] flex flex-col justify-evenly">
+<h2 className="font-medium ">{elm?.name?.length<17?elm?.name : elm?.name?.substring(0,16)+'...'}</h2>
+<p className="text-sm w-[90%] ">{elm?.description?.length<67?elm?.description : elm?.description.substring(0,67)+'...'}</p>
+{/* 68 */}
+</div>
+</div>
+</a>
+  </>
+})
+}
+</div>
+
+
+
         <div className=" w-[100%] h-[150px]  flex justify-center items-center mt-[80px]" style={{background: `linear-gradient(to top, ${hexToRGBA(userdata?.colorCode)},${hexToRGBA(userdata?.colorCode)}, white)`}}>
 <div className="h-[45px] w-[250px] rounded-full border-t shadow-xl flex justify-center items-center text-lg font-medium cursor-pointer">
     Create your own profile
 </div>
         </div>
       </div>
+
     </div>
+    :
+    window.open(returnSocialUrl(userdata?.direct?.name, userdata?.direct?.value))
 }
     </>
     }
